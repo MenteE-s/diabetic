@@ -11,8 +11,9 @@ from services.Preprocess_Images import ImageProcessor
 from services.feature_extraction.GLCM import Applying_GLCM
 from services.feature_extraction.FDFE import WaveletFeatureExtractor
 from services.feature_extraction.resnet import Resnet_Extractor
+from services.feature_extraction.EfficientNet import EfficientNetExtractor
 
-class Pipeline_And_Everything:
+class Processing_and_logging:
     def __init__(self):
         pass
 
@@ -69,137 +70,186 @@ class Pipeline_And_Everything:
             return None
 
 
-def feature_extraction_using_GKCM(image_folder, lable):
-    features_list = []
-    labels = []
+class Pipeline(Processing_and_logging):
+    def __init__(self, image_folder, label):
+        super().__init__()
+        self.image_folder = image_folder
+        self.label = label
 
-    logger.info(f"Starting feature extraction from images in: {image_folder}")
+    def feature_extraction_using_GLCM(self):
+        features_list = []
+        self.labels = []
 
-    for filename in os.listdir(image_folder):
-        if filename.endswith((".jpg", ".png", ".jpeg")):
-            image_path = os.path.join(image_folder, filename)
+        logger.info(f"Starting feature extraction from images in: {self.image_folder}")
 
-            logger.info(f"Processing file: {filename}")
-            image = pipeline_and_everything.start_processing(image_path=image_path)
-            # cv2.imshow('Image', image)
-
-            if image is not None:
-                # Extract GLCM and histogram features
-                glcm_features = Applying_GLCM.extract_glcm_features(image=image)
-                histogram_features = Applying_GLCM.extract_grayscale_histogram(image=image)
-
-                features = np.hstack([glcm_features, histogram_features])
-                features_list.append(features)
-
-                labels.append(lable)
-                logger.info(f"Features extracted for {filename} | labled as {lable}")
-                logger.info(f"Features: {features_list}  \n\n")
-
-    # Convert to DataFrame
-    df = pd.DataFrame(features_list)
-    df["label"] = labels
-
-    # Normalize features (excluding labels)
-    scaler = MinMaxScaler()
-    df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
-
-    logger.info("Feature extraction and normalization completed successfully.")
+        for filename in os.listdir(self.image_folder):
+            if filename.endswith((".jpg", ".png", ".jpeg")):
+                image_path = os.path.join(self.image_folder, filename)
     
-    # Optionally, you can save the DataFrame here if everything looks good
-    # df.to_csv("processed_features.csv", index=False)
-
-    # Show the first few rows to verify
-    logger.info(f"Processed data preview:\n{df.head()}")
+                logger.info(f"Processing file: {filename}")
+                image = pipeline_and_everything.start_processing(image_path=image_path)
+                # cv2.imshow('Image', image)
     
-def feature_extraction_using_FDFE(image_folder, lable):
-
-    features_list = []
-    labels = []
-
-    wavelet_extractor = WaveletFeatureExtractor()
-
-    logger.info(f"Starting feature extraction from images in: {image_folder}")
-
-    for filename in os.listdir(image_folder):
-        if filename.endswith((".jpg", ".png", ".jpeg")):
-            image_path = os.path.join(image_folder, filename)
-
-            logger.info(f"Processing file: {filename}")
-            image = pipeline_and_everything.start_processing(image_path=image_path)
-            # cv2.imshow('Image', image)
-
-            if image is not None:
-                # Extract GLCM and histogram features
-                FDFC_features = wavelet_extractor.extract_wavelet_features(image=image)
-
-                features_list.append(FDFC_features)
-
-                labels.append(lable)
-                logger.info(f"Features extracted for {filename} | labled as {lable}")
-                logger.info(f"Features: {features_list}  \n\n")
-
-    # Convert to DataFrame
-    df = pd.DataFrame(features_list)
-    df["label"] = labels
-
-    # Normalize features (excluding labels)
-    scaler = MinMaxScaler()
-    df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
-
-    logger.info("Feature extraction and normalization completed successfully.")
+                if image is not None:
+                    # Extract GLCM and histogram features
+                    glcm_features = Applying_GLCM.extract_glcm_features(image=image)
+                    histogram_features = Applying_GLCM.extract_grayscale_histogram(image=image)
     
-    # Optionally, you can save the DataFrame here if everything looks good
-    # df.to_csv("processed_features.csv", index=False)
-
-    # Show the first few rows to verify
-    logger.info(f"Processed data preview:\n{df.head()}")
-
-
-def feature_extraction_using_resnet(image_folder, lable):
-
-    features_list = []
-    labels = []
-
-    resnet_extractor = Resnet_Extractor()
-
-    logger.info(f"Starting feature extraction from images in: {image_folder}")
-
-    for filename in os.listdir(image_folder):
-        if filename.endswith((".jpg", ".png", ".jpeg")):
-            image_path = os.path.join(image_folder, filename)
-
-            img = cv2.imread(image_path)
-            # cv2.imshow('Image', image)
-
-            if img is not None:
-                # Extract GLCM and histogram features
-                FDFC_features = resnet_extractor.extract_features(images=image_path)
-
-                features_list.append(FDFC_features)
-
-                labels.append(lable)
-                logger.info(f"Features extracted for {filename} | labled as {lable}")
-                logger.info(f"Features: {features_list}  \n\n")
-
-    # Convert to DataFrame
-    df = pd.DataFrame(features_list)
-    df["label"] = labels
-
-    # Normalize features (excluding labels)
-    scaler = MinMaxScaler()
-    df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
-
-    logger.info("Feature extraction and normalization completed successfully.")
+                    features = np.hstack([glcm_features, histogram_features])
+                    features_list.append(features)
     
-    # Optionally, you can save the DataFrame here if everything looks good
-    # df.to_csv("processed_features.csv", index=False)
+                    self.labels.append(lable)
+                    logger.info(f"Features extracted for {filename} | labled as {lable}")
+                    logger.info(f"Features: {features_list}  \n\n")
+    
+        # Convert to DataFrame
+        df = pd.DataFrame(features_list)
+        df["label"] = self.labels
+    
+        # Normalize features (excluding labels)
+        scaler = MinMaxScaler()
+        df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
+    
+        logger.info("Feature extraction and normalization completed successfully.")
+        
+        # Optionally, you can save the DataFrame here if everything looks good
+        # df.to_csv("processed_features.csv", index=False)
+    
+        # Show the first few rows to verify
+        logger.info(f"Processed data preview:\n{df.head()}")
+    def feature_extraction_using_FDFE(self):
 
-    # Show the first few rows to verify
-    logger.info(f"Processed data preview:\n{df.head()}")
+        features_list = []
+        self.labels = []
+
+        wavelet_extractor = WaveletFeatureExtractor()
+
+        logger.info(f"Starting feature extraction from images in: {self.image_folder}")
+
+        for filename in os.listdir(self.image_folder):
+            if filename.endswith((".jpg", ".png", ".jpeg")):
+                image_path = os.path.join(self.image_folder, filename)
+
+                logger.info(f"Processing file: {filename}")
+                image = pipeline_and_everything.start_processing(image_path=image_path)
+                # cv2.imshow('Image', image)
+
+                if image is not None:
+                    # Extract wavelet features
+                    wavelet_features = wavelet_extractor.extract_wavelet_features(image=image)
+
+                    features_list.append(wavelet_features)
+
+                    self.labels.append(lable)
+                    logger.info(f"Features extracted for {filename} | labled as {lable}")
+                    logger.info(f"Features: {features_list}  \n\n")
+
+        # Convert to DataFrame
+        df = pd.DataFrame(features_list)
+        df["label"] = self.labels
+
+        # Normalize features (excluding labels)
+        scaler = MinMaxScaler()
+        df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
+
+        logger.info("Feature extraction and normalization completed successfully.")
+
+        # Optionally, you can save the DataFrame here if everything looks good
+        # df.to_csv("processed_features.csv", index=False)
+
+        # Show the first few rows to verify
+        logger.info(f"Processed data preview:\n{df.head()}")
+    def feature_extraction_using_resnet(self):
+
+        features_list = []
+        self.labels = []
+
+        resnet_extractor = Resnet_Extractor()
+
+        logger.info(f"Starting feature extraction from images in: {self.image_folder}")
+
+        for filename in os.listdir(self.image_folder):
+            if filename.endswith((".jpg", ".png", ".jpeg")):
+                image_path = os.path.join(self.image_folder, filename)
+
+                img = cv2.imread(image_path)
+                # cv2.imshow('Image', image)
+
+                if img is not None:
+                    # Extract Resnet features
+                    resnet_features = resnet_extractor.extract_features(images=image_path)
+
+                    features_list.append(resnet_features)
+
+                    self.labels.append(lable)
+                    logger.info(f"Features extracted for {filename} | labled as {lable}")
+                    logger.info(f"Features: {features_list}  \n\n")
+
+        # Convert to DataFrame
+        df = pd.DataFrame(features_list)
+        df["label"] = self.labels
+
+        # Normalize features (excluding labels)
+        scaler = MinMaxScaler()
+        df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
+
+        logger.info("Feature extraction and normalization completed successfully.")
+
+        # Optionally, you can save the DataFrame here if everything looks good
+        # df.to_csv("processed_features.csv", index=False)
+
+        # Show the first few rows to verify
+        logger.info(f"Processed data preview:\n{df.head()}")
+    def feature_extraction_using_efficientnet(self):
+
+        features_list = []
+        self.labels = []
+
+        efficientnet_extractor = EfficientNetExtractor()
+        efficientnet_extractor.load_model()
+
+        logger.info(f"Starting feature extraction from images in: {self.image_folder}")
+
+        for filename in os.listdir(self.image_folder):
+            if filename.endswith((".jpg", ".png", ".jpeg")):
+                image_path = os.path.join(self.image_folder, filename)
+
+                img = cv2.imread(image_path)
+                # cv2.imshow('Image', image)
+
+                if img is not None:
+                    # Extract EfficientNet Features
+                    FDFC_features = efficientnet_extractor.extract_features(img_path=image_path)
+
+                    features_list.append(FDFC_features)
+
+                    self.labels.append(lable)
+                    logger.info(f"Features extracted for {filename} | labled as {lable}")
+                    logger.info(f"Features: {features_list}  \n\n")
+
+        # Convert to DataFrame
+        df = pd.DataFrame(features_list)
+        df["label"] = self.labels
+
+        # Normalize features (excluding labels)
+        scaler = MinMaxScaler()
+        df.iloc[:, :-1] = scaler.fit_transform(df.iloc[:, :-1])
+
+        logger.info("Feature extraction and normalization completed successfully.")
+
+        # Optionally, you can save the DataFrame here if everything looks good
+        # df.to_csv("processed_features.csv", index=False)
+
+        # Show the first few rows to verify
+        logger.info(f"Processed data preview:\n{df.head()}")
+
+
+
+
 
 if __name__ == "__main__":
 
-    pipeline_and_everything = Pipeline_And_Everything()
+    pipeline_and_everything = Processing_and_logging()
     logger = pipeline_and_everything.setup_logging()
     image_folder = [
         r"dataset\raw\Diabetic retinopathy\No_DR",
@@ -210,5 +260,7 @@ if __name__ == "__main__":
     ]
     lable = ["No_DR","Mild", "Moderate", "Proliferate_DR", "Severe"]
 
+    pipeline = Pipeline(image_folder=image_folder[0], label=lable[0])
+
     # feature_extraction_using_GKCM(image_folder[0], lable[0])
-    feature_extraction_using_resnet(image_folder[0], lable[0])
+    pipeline.feature_extraction_using_efficientnet()
