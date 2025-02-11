@@ -13,6 +13,8 @@ from services.feature_extraction.FDFE import WaveletFeatureExtractor
 from services.feature_extraction.resnet import Resnet_Extractor
 from services.feature_extraction.EfficientNet import EfficientNetExtractor
 from services.Balancing.CycleGAN import CycleGAN
+from services.Balancing.AutoSIG import Autoencoder
+
 
 class Processing_and_logging:
     def __init__(self):
@@ -250,6 +252,7 @@ class Balancing_techniques(Processing_and_logging):
         super().__init__()
         self.image_path = image_path
         self.cycle_gan = CycleGAN()  # Use the full CycleGAN model
+        self.autoencoder = Autoencoder()
 
     def cycle_gan_Balancing(self):
         logger.info(f"Starting feature extraction from images in: {self.image_path}")
@@ -273,7 +276,7 @@ class Balancing_techniques(Processing_and_logging):
 
                 # Display the image
                 cv2.imshow("Generated Diseased Image", fake_diseased)
-                cv2.waitKey(1)
+                cv2.waitKey(0)
                 cv2.destroyAllWindows()
 
                 logger.info(f"Generated Image Shape: {fake_diseased.shape}")
@@ -306,6 +309,29 @@ class Balancing_techniques(Processing_and_logging):
 
                 # logger.info(f"Generated Image Shape: {fake_diseased.shape}")
                 # logger.info(f"Discriminator Score: {classification}")  # Close to 1 = real, Close to 0 = fake
+    
+
+    def autoencoders_Balancing(self):
+       logger.info(f"Starting feature extraction from images in: {self.image_path}")
+       for filename in os.listdir(self.image_path):
+           if filename.endswith((".jpg", ".png", ".jpeg")):
+               image_path = os.path.join(self.image_path, filename)
+               img = cv2.imread(image_path)
+               resized = cv2.resize(img, (256, 256))
+               image = resized.astype(np.float32) / 255  # Normalize
+               # reconstruct  image
+               reconstruct_diseased = self.autoencoder.reconstruct_image(image)
+               
+               # Convert back to 0-255 range for OpenCV
+               reconstruct_diseased = np.clip(reconstruct_diseased * 255, 0, 255).astype(np.uint8)
+
+
+
+               # Display the image
+               cv2.imshow("Generated Diseased Image", reconstruct_diseased * 255)
+               cv2.waitKey(0)
+               cv2.destroyAllWindows()
+               logger.info(f"Generated Image Shape: {reconstruct_diseased.shape}")
         
         
         
@@ -335,6 +361,6 @@ if __name__ == "__main__":
     # Data Balancing Example
 
     balancing_techniques = Balancing_techniques(image_path=image_folder[2])
-    balancing_techniques.cycle_gan_Balancing()
+    balancing_techniques.autoencoders_Balancing()
 
 
