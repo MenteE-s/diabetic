@@ -223,12 +223,14 @@ class Extraction_Functions(Processing_and_logging):
                 if img is not None:
                     # Extract EfficientNet Features
                     FDFC_features = efficientnet_extractor.extract_features(img_path=image_path)
+                    
+                    flattened_features = FDFC_features.flatten()
 
-                    features_list.append(FDFC_features)
+                    features_list.append(flattened_features)
 
-                    self.labels.append(lable)
-                    logger.info(f"Features extracted for {filename} | labled as {lable}")
-                    logger.info(f"Features: {features_list}  \n\n")
+                    self.labels.append(label)
+                    logger.info(f"Features extracted for {filename} | labled as {label}")
+                    # logger.info(f"Features: {features_list}  \n\n")
 
         # Convert to DataFrame
         df = pd.DataFrame(features_list)
@@ -241,7 +243,7 @@ class Extraction_Functions(Processing_and_logging):
         logger.info("Feature extraction and normalization completed successfully.")
 
         # Optionally, you can save the DataFrame here if everything looks good
-        # df.to_csv("processed_features.csv", index=False)
+        df.to_csv(f"{self.labels[0]}_features.csv", index=False)
 
         # Show the first few rows to verify
         logger.info(f"Processed data preview:\n{df.head()}")
@@ -335,32 +337,42 @@ class Balancing_techniques(Processing_and_logging):
         
         
         
-
-
-
-
 if __name__ == "__main__":
-
+    # Initialize logging
     pipeline_and_everything = Processing_and_logging()
     logger = pipeline_and_everything.setup_logging()
-    image_folder = [
-        r"dataset\raw\Diabetic retinopathy\No_DR",
-        r"dataset\raw\Diabetic retinopathy\Mild",
-        r"dataset\raw\Diabetic retinopathy\Moderate",
-        r"dataset\raw\Diabetic retinopathy\Proliferate_DR",
-        r"dataset\raw\Diabetic retinopathy\Severe"
+    
+    image_folders = [
+        r"dataset\clean\No_DR",
+        r"dataset\clean\Mild",
+        r"dataset\clean\Moderate",
+        r"dataset\clean\Proliferate_DR",
+        r"dataset\clean\Severe"
     ]
-    lable = ["No_DR","Mild", "Moderate", "Proliferate_DR", "Severe"]
+    labels = ["No_DR", "Mild", "Moderate", "Proliferate_DR", "Severe"]
 
-    # feature extraction Example
+    extracted_csv_files = []
 
-    # extraction = Extraction_Functions(image_folder=image_folder[0], label=lable[0])
-    # feature_extraction_using_GKCM(image_folder[0], lable[0])
-    # extraction.feature_extraction_using_efficientnet()
+    for folder, label in zip(image_folders, labels):
+        logger.info(f"Processing folder: {folder} with label: {label}")
 
-    # Data Balancing Example
+        # Initialize feature extraction
+        extraction = Extraction_Functions(image_folder=folder, label=label)
+        
+        # Feature extraction
+        csv_filename = f"features_{label}.csv"
+        logger.info(f"Starting feature extraction using EfficientNet for {label}...")
 
-    balancing_techniques = Balancing_techniques(image_path=image_folder[2])
-    balancing_techniques.autoencoders_Balancing()
+        extraction.feature_extraction_using_efficientnet()  # Feature extraction
 
+        logger.info(f"Feature extraction completed for {label}. CSV saved as {csv_filename}")
+        
+        extracted_csv_files.append(csv_filename)
+
+    # Commented out: Combining all CSVs into one file
+    # final_csv = "all_features_combined.csv"
+    # combine_csv_files(extracted_csv_files, final_csv)  
+    # logger.info(f"All feature files combined and saved as {final_csv}")
+
+    logger.info("Processing complete.")
 
