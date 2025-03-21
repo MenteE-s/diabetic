@@ -6,3 +6,5 @@ tensorflow
 PyWavelets
 Pillow
 tqdm
+shap
+matplotlib

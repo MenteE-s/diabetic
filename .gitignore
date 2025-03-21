@@ -4,3 +4,5 @@ dataset
 /env
 backup
 logs
+model.h5
+label_encoder.pkl
